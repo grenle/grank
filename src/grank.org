@@ -443,7 +443,7 @@ major-mode
 * Mistakes made, lessons learned
 
 | Error                      | Lesson                     |
-+----------------------------+----------------------------+
+|----------------------------+----------------------------|
 | <26>                            | <26> |
 | Writing URL % encoding handler ignoring the functionality already provided in emacs | RTM? Get familiar with tools, librairies, etc... |
-
+|----------------------------+----------------------------|
