@@ -1,0 +1,427 @@
+#+AUTHOR:Gregory Houldsworth
+#+TITLE:Grank
+#+DESCRIPTION:Mode aware URL yank
+
+;;; rfc6068.el --- support for rfc6068  -*- lexical-binding: t -*-
+;;; rfc6068-unhexify-string
+
+* Todos
+
+** TODO can macros fill the prologue details
+
+This package provides functions to help yanking a link
+depending on the url and major mode.
+
+For example, in a markdown buffer, /grank/ing the link
+~https://en.wikipedia.org/wiki/Lisp_machine~
+would result in yanking
+~[https://en.wikipedia.org/wiki/Lisp_machine](Lisp machine)~
+
+* Prologue
+
+#+begin_src elisp :tangle yes
+;;; grank.el -- Mode aware URL yanking  -*- lexical-binding: t; -*-
+
+;;; Commentary:
+;;; Mode aware URL yanking.
+
+;;; Code:
+
+(require 'url)
+(require 'cl)
+#+end_src
+
+* Grank
+
+Yanking a URL into an Org or markdown buffer is tedious.
+
+For a simple inline wikipedia link:
+1. copy the URL from the browser
+2. switch to Emacs & yank the URL
+3. go back to the browser and copy the title
+4. and back to emacs to paste that
+
+Simply copying the URL twice and keeping the last element of
+the path as a title is just as tedious and often won't do
+because of percent encoding. Also, this recipe fails for
+youtube URLs: the video id is unhelpful as link text.
+
+Going back to the URL, we wish to transform it:
+
+=URL → parsed url → link information → link text=
+
+
+
+* Epilogue
+
+#+begin_src elisp :tangle yes
+(provide 'grank)
+;;; grutils.el ends here
+#+end_src
+
+#+begin_src elisp
+(defvar grunk-url-dispatch-table nil)
+(defvar grunk-mode-dispatch-table nil)
+
+(cl-defstruct
+    (grank-link-info     
+     (:constructor make-grank-link-info
+                   (url title &optional synopsis)))
+  "Represent information about a URL."
+  (url :read-only t :type string)
+  (title :read-only t :type string)
+  (synopsis nil :read-only t :type string))
+
+(defun grank--default-url-handler (parsed-url)
+  "Create basic link-info from PARSED-URL."
+  (let ((plain-url (url-recreate-url parsed-url)))
+    (make-grank-link-info plain-url plain-url)))
+
+(defun grank--default-mode-handler (url-info &optional style)
+  "Create basic string from URL-INFO.
+The STYLE parameter changes the output. Unused as of now."
+  (let ((url (grank-link-info-url url-info))
+        (title (grank-link-info-title url-info))
+        (synopsis (grank-link-info-synopsis url-info)))
+    (pcase major-mode
+      ('org-mode
+       (pcase style
+         (t (format "[[%s][%s]]" url title))))
+      (t url))))
+
+(defun grunk--url-dispatch (parsed-url)
+  "Build a url-info structure from a PARSED-URL.
+The url-info builder is select from the url-dispatch-table."
+  (let* ((hostname (url-host parsed-url))
+         (f (alist-get
+              hostname
+              grunk-url-dispatch-table
+              #'grank--default-url-handler)))
+    (funcall f parsed-url)))
+
+(defun grunk--mode-dispatch (link-info)
+  "Build a major-mode appropriate link form LINK-INFO."
+  (let ((f (alist-get
+            major-mode
+            grunk-url-dispatch-table
+            #'grank--default-mode-handler)))
+    (funcall f link-info)))
+
+(grunk--url-dispatch (url-generic-parse-url "boobidoo"))
+
+(grunk--mode-dispatch
+ (grunk--url-dispatch
+  (url-generic-parse-url "boobidoo")))
+
+(defun grank--wkpd-url-handler (parsed-url)
+  
+(setq grunk-url-dispatch-table
+      (cons () grunk-url-dispatch-table))
+
+(string-remove-prefix
+ "/wiki/"
+ (url-filename
+  (url-generic-parse-url
+   "https://en.wikipedia.org/wiki/Brunoise")))
+
+ (string-remove-prefix
+  "/wiki/"
+  (url-filename
+   (url-generic-parse-url
+    "https://ar.wikipedia.org/wiki/%D8%AD%D9%85%D8%B5_%D8%A8%D8%B7%D8%AD%D9%8A%D9%86%D8%A9")))  
+#+end_src
+
+* Front matter
+
+#+begin_src elisp :tangle yes
+;;; grank.el -- Mode aware URL yanking  -*- lexical-binding: t; -*-
+
+;;; Commentary:
+;;; Mode aware URL yanking.
+
+;;; Code:
+
+(require 'url)
+#+end_src
+
+#+begin_src elisp :tangle yes
+(provide 'grank)
+;;; grutils.el ends here
+#+end_src
+
+* General strategy
+
+
+1. call uri-dispatch with a parsed URI structure
+1. dispatch consumes a dispatch-table and calls the
+   appropriate uri-handler with url-struct.
+2. uri-handler produces link-info
+4. call link-info-dispatch with
+3. ...Consume link-info, produce string for current major mode...table?
+
+| stage        | input type                  | output type     |
+|--------------+-----------------------------+-----------------|
+| in           | string (uri)                | uri struct      |
+| uri dispatch | uri struct * dispatch table | f (uri handler) |
+| handle uri   | uri struct                  | stuct link info |
+| handle info  | struct link info            | string          |
+
+
+* /Types/
+
+We need "dispatch tables" for ~uri → handler~ and ~mode →
+handler~ correspondances.  Those are simple ~alist~s. We set
+them to ~nil~ to immediately exert our defaults and
+demonstrate how to augment it.
+
+#+begin_src elisp :tangle yes
+(defvar grunk-uri-dispatch-table nil)
+(defvar grunk-mode-dispatch-table nil)
+#+end_src
+
+We also need to represent link information. For this, we
+turn to cl structures:
+
+#+begin_src elisp :tangle yes
+(cl-defstruct
+    (grank-link-info
+     (:constructor make-grank-link-info
+                   (uri title &optional synopsis)))
+  (uri :read-only t :type string)
+  (title :read-only t :type string)
+  (synopsis nil :read-only t :type string))
+#+end_src
+
+We also need a default handler:
+
+#+begin_src elisp :tangle yes
+(defun grank--default-info-handler (url-and-parts)
+  (let ((url (car url-and-parts)))
+    (make-grank-link-info url url)))
+#+end_src
+
+
+#+begin_src elisp
+(defvar grurl--yt-rx-video-id
+  (rx "?v="
+      (group
+       (zero-or-more
+        (or (in (?A . ?Z))
+            (in (?a . ?z))
+            (in (?0 . ?9))
+            "-")))))
+#+end_src
+
+
+** dispatch
+
+For now, I am happy to dispatch on the host.
+
+It may be interesting to dispatch on url parts, building a
+tree from those whose leaves are handlers. These leaves may
+occur at any depth, so a type could have a universal
+function for example. The problem is one of order: user
+comes before host. In practise, would this lead to a more
+complex, less intuitive tree than pushing user bellow host?
+On the other hand, sticking with the order of urls could be
+cleaner and easier to discover for someone just trying to
+add functionality. Anyway, questions for later.
+
+#+begin_src elisp
+(defvar grank-host-handlers
+  '(("www.youtube.com" . the-u-tube)
+    ("www.duckduckgo.com" . a-search-engine)))
+#+end_src
+
+
+
+* Paste nicely
+
+Suggested general bindings: what? do? (line yank).
+But for yank...y [u(rl)] [o(rg) m(d) h(tml)]
+And space to mean "magic" (determine if url and which mode we're in)
+
+Our link yanking should try to determine the current major
+mode and yank accordingly. For now, I just need links to be
+properly yanked in org, markdown and html.
+
+* TODO make gurl yank org links for youtube
+* TODO extend to wikipedia
+
+;; <url>
+;; <parsed-url>
+;; => (info-extraction-method . <parsed-url>)
+;; => <info> : (:title <title> :author <author/channel/...>
+
+;; we should be able to add infos to <info> without breaking anything
+;; the minimum being title + url
+;; p-list (:title "by %s" ...)
+;; for output in a format, overridable by user.
+;; not quite, it need to be ordered.
+
+** Paste youtube in Org mode
+
+Don't change the kill ring? Original, unformatted stays
+here? Option to remove it or change it in the kill ring? How
+do these options play with another use: format an existing
+plain link in document?
+
+For youtube, we have links of the form:
+
+- plain ~https://www.youtube.com/watch?v=QXjRu9j-0w0~
+- plain with time ~https://www.youtube.com/watch?v=QXjRu9j-0w0?t=1121~
+- short ~https://youtu.be/QXjRu9j-0w0~
+- short with time ~https://youtu.be/QXjRu9j-0w0?t=1187~
+
+There are others, but as far as I can tell, they do not pose
+problems.
+
+
+#+begin_src elisp
+(defun grurl--get-page-content (url)
+  (let ((res nil)
+        (res-buffer
+         (url-retrieve-synchronously url)))
+    (with-current-buffer res-buffer
+      (setq res (buffer-string)))
+    (kill-buffer res-buffer)
+    res))
+#+end_src
+
+*** Plain
+
+#+begin_src elisp
+(defvar grurl
+  (rx "?v="
+      (group
+       (zero-or-more
+        (or (in (?A . ?Z))
+            (in (?a . ?z))
+            (in (?0 . ?9))
+            "-")))))
+#+end_src
+
+;;;;;; Rubbish from scratch session
+
+(y-or-n-p "Really? ")
+
+
+;; maybes thread various functions if car non nil
+;; grutils-maybe f g h
+;; f (nil) : return
+;; f (t . stuff) : apply g to stuff
+
+(defun foot (response)
+  "The thing."
+  (interactive "c(s)ome (a)ll (n)one")
+    (cond ((eq response ?s) (insert "sss"))
+          ((eq response ?a) (insert "aaa"))
+          ((eq response ?n) (insert "nnn"))
+          (t (insert "no idea"))))
+
+(defun gremplate--are-you-sure ()
+  "Not sure now."
+  (interactive "c(b)lue (r)ed")
+  response)
+
+
+(interactive
+ (let ((string (read-string "Foo: " nil 'my-history)))
+   (list (region-beginning) (region-end) string)))
+
+;; base64-decode-string string &optional base64url
+;; b64url if base64url is t (or non-nil)
+
+(current-kill 0 t)
+
+(defvar the-response)
+(setq the-response
+      (url-retrieve-synchronously "https://www.example.com/"))
+
+
+
+(kill-buffer the-response)
+
+(with-current-buffer
+    the-response
+  (buffer-string))
+
+(defun grurl--handler-yt (url)
+  (
+
+(url-filename
+ (url-generic-parse-url
+  "https://www.youtube.com/watch?v=QXjRu9j-0w0"))
+
+(string-match
+ (rx "?"
+     (zero-or-more
+      (or (in (?A . ?Z))
+          (in (?a . ?z))
+          (in (?0 . ?9))
+          "-")))
+ (url-filename
+  (url-generic-parse-url
+   "https://www.youtube.com/watch?v=QXjRu9j-0w0")))
+
+(defun grurl--temp (s)
+  (let* ((url-parts (url-generic-parse-url s))
+         (filename (url-filename url-parts)))
+    (string-match
+     (rx "?v="
+         (group
+          (zero-or-more
+           (or (in (?A . ?Z))
+               (in (?a . ?z))
+               (in (?0 . ?9))
+               "-"))))
+     s)
+    (match-string 1 s)))
+
+
+;;; dedicate a window to a buffer..as in window.el exception
+;;; to previous-buffer
+
+major-mode
+
+(defun grutils-buffer-major-mode (buffer-or-name)
+  "Get BUFFER-OR-NAME's major mode"
+  (with-current-buffer buffer-or-name
+    major-mode))
+
+(defun grutils-current-buffer-major-mode ()
+  "Get current buffer's major mode."
+  (interactive)
+  (message
+   "%s"
+   (grutils-buffer-major-mode (current-buffer))))
+
+(current-buffer)
+
+;; C-h (k key) (f function)
+
+(defun gremplate--are-you-sure ()
+  "Not sure now."
+  (read-char-choice "wa? " '(?b ?r ?t)))
+
+(defun gremplate-doobidoo ()
+  "Try but ask first"
+  (pcase (gremplate--are-you-sure)
+    (?b "the ocean!")
+    (?r "wine")
+    (t "the undiscovered country")))
+
+major-mode
+(gremplate-doobidoo)
+
+
+(= ?a 97)
+(foot 'a)
+
+(let ((response (interactive "c(s)ome (a)ll (n)one")))
+  (cond ((= response ?s) "only something")
+        ((= response ?a) "all the things")
+        ((= response ?n) "nothing at all")
+        (t "no idea what you mean")))
+
+        
