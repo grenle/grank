@@ -5,24 +5,6 @@
 ;;; rfc6068.el --- support for rfc6068  -*- lexical-binding: t -*-
 ;;; rfc6068-unhexify-string
 
-* Todos
-
-** TODO can macros fill the prologue details
-
-* Prologue
-
-#+begin_src elisp :tangle yes
-;;; grank.el -- Mode aware URL yanking  -*- lexical-binding: t; -*-
-
-;;; Commentary:
-;;; Mode aware URL yanking.
-
-;;; Code:
-
-(require 'url)
-(require 'cl)
-#+end_src
-
 * Grank
 
 Yanking a URL into an Org or markdown buffer is tedious.
@@ -38,11 +20,72 @@ the path as a title is just as tedious and often won't do
 because of percent encoding. Also, this recipe fails for
 youtube URLs: the video id is unhelpful as link text.
 
-Going back to the URL, we wish to transform it:
+What we need is a Lisp function to transform =URL → parsed
+url → link information → link text=
 
-=URL → parsed url → link information → link text=
+This suggests pairs of specialised procedures, one for
+extracting information from a specific sort of link. For
+now, we specialise on the URL's hostname part. A second
+procedure, called with the extracted information to produce
+text according to the major mode in effect.
+
+For URLs and modes for which no handler exists, we need
+default procedures.
+
+We also need two sorts of data
+- two alists:
+  - hostname/info-extraction procedure table
+  - mode/info-printing procedure table
+- A structure to carry the extracted link info. We use cl's
+  struct with keyword constructor, so we can add
+  transparently add more items without breakage.
+
+These are simple enough:
+
+#+begin_src elisp
+(defvar grunk-url-dispatch-table nil)
+(defvar grunk-mode-dispatch-table nil)
+
+(cl-defstruct
+    (grank-link-info     
+     (:constructor make-grank-link-info
+                   (url title &optional synopsis)))
+  "Represent information about a URL."
+  (url :read-only t :type string)
+  (title :read-only t :type string)
+  (synopsis nil :read-only t :type string))
+
+(defun grank--default-url-handler (parsed-url)
+  "Create basic link-info from PARSED-URL."
+  (let ((plain-url (url-recreate-url parsed-url)))
+    (make-grank-link-info plain-url plain-url)))
+#+end_src
 
 
+
+* Prologue
+
+The usual for elisp files. Could the filename and tiny
+description be put in variables?
+
+#+begin_src elisp :tangle yes
+;;; grank.el -- Mode aware URL yanking  -*- lexical-binding: t; -*-
+
+;;; Commentary:
+;;; Mode aware URL yanking.
+
+;;; Code:
+#+end_src
+
+* Requirements
+
+We are using ~url~ for url parsing and ~cl~ for
+structures. Both are included in Emacs.
+
+#+begin_src elisp
+(require 'url)
+(require 'cl)
+#+end_src
 
 * Epilogue
 
@@ -397,4 +440,10 @@ major-mode
         ((= response ?n) "nothing at all")
         (t "no idea what you mean")))
 
-        
+* Mistakes made, lessons learned
+
+| Error                      | Lesson                     |
++----------------------------+----------------------------+
+| <26>                            | <26> |
+| Writing URL % encoding handler ignoring the functionality already provided in emacs | RTM? Get familiar with tools, librairies, etc... |
+
