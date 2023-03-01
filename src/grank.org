@@ -12,7 +12,7 @@
 This package provides functions to help yanking a link
 depending on the url and major mode.
 
-For example, in a markdown buffer, /grank/ing the link
+For example, in a markdown buffer, /grank/-ing the link
 ~https://en.wikipedia.org/wiki/Lisp_machine~
 would result in yanking
 ~[https://en.wikipedia.org/wiki/Lisp_machine](Lisp machine)~
