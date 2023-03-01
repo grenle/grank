@@ -9,14 +9,6 @@
 
 ** TODO can macros fill the prologue details
 
-This package provides functions to help yanking a link
-depending on the url and major mode.
-
-For example, in a markdown buffer, /grank/-ing the link
-~https://en.wikipedia.org/wiki/Lisp_machine~
-would result in yanking
-~[https://en.wikipedia.org/wiki/Lisp_machine](Lisp machine)~
-
 * Prologue
 
 #+begin_src elisp :tangle yes
@@ -131,26 +123,7 @@ The url-info builder is select from the url-dispatch-table."
     "https://ar.wikipedia.org/wiki/%D8%AD%D9%85%D8%B5_%D8%A8%D8%B7%D8%AD%D9%8A%D9%86%D8%A9")))  
 #+end_src
 
-* Front matter
-
-#+begin_src elisp :tangle yes
-;;; grank.el -- Mode aware URL yanking  -*- lexical-binding: t; -*-
-
-;;; Commentary:
-;;; Mode aware URL yanking.
-
-;;; Code:
-
-(require 'url)
-#+end_src
-
-#+begin_src elisp :tangle yes
-(provide 'grank)
-;;; grutils.el ends here
-#+end_src
-
 * General strategy
-
 
 1. call uri-dispatch with a parsed URI structure
 1. dispatch consumes a dispatch-table and calls the
