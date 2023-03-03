@@ -1,9 +1,6 @@
-#+AUTHOR:Gregory Houldsworth
-#+TITLE:Grank
-#+DESCRIPTION:Mode aware URL yank
-
-;;; rfc6068.el --- support for rfc6068  -*- lexical-binding: t -*-
-;;; rfc6068-unhexify-string
+#+AUTHOR: Gregory Houldsworth
+#+TITLE: Grank
+#+DESCRIPTION: Mode aware URL yank
 
 * Grank
 
