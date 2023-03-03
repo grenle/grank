@@ -23,11 +23,11 @@ youtube URLs: the video id is unhelpful as link text.
 What we need is a Lisp function to transform =URL → parsed
 url → link information → link text=
 
-This suggests pairs of specialised procedures, one for
-extracting information from a specific sort of link. For
-now, we specialise on the URL's hostname part. A second
-procedure, called with the extracted information to produce
-text according to the major mode in effect.
+This suggests two sorts of specialised procedures:
+- one for extracting information from a specific sort of
+  link. For now, we specialise on the URL's hostname part.
+- Another procedure, called with the extracted information
+  to produce text according to the major mode in effect.
 
 For URLs and modes for which no handler exists, we need
 default procedures.
@@ -40,27 +40,31 @@ We also need two sorts of data
   struct with keyword constructor, so we can add
   transparently add more items without breakage.
 
-These are simple enough:
+The alists are trivial:
 
 #+begin_src elisp
 (defvar grunk-url-dispatch-table nil)
 (defvar grunk-mode-dispatch-table nil)
+#+end_src
 
-(cl-defstruct
-    (grank-link-info     
-     (:constructor make-grank-link-info
-                   (url title &optional synopsis)))
-  "Represent information about a URL."
-  (url :read-only t :type string)
+The link-info structure is quite simple.
+
+#+begin_src elisp
+(cl-defstruct grank-link-info
+  "Represent grank link info."
+  (uri :read-only t :type string)
   (title :read-only t :type string)
   (synopsis nil :read-only t :type string))
+#+end_src
 
+We can now write our two default handlers:
+
+#+begin_src elisp
 (defun grank--default-url-handler (parsed-url)
   "Create basic link-info from PARSED-URL."
   (let ((plain-url (url-recreate-url parsed-url)))
     (make-grank-link-info plain-url plain-url)))
 #+end_src
-
 
 
 * Prologue
