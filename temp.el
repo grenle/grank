@@ -3,11 +3,6 @@
 (require 'url)
 (require 'cl-lib)
 
-;; inclusion of cl-lib seems ok because it is used by the
-;; url package.
-
-;; <package-name>-*<function-name> (mypackage-*my-function) a version of the function called by a "cleaner" version.
-;; for example: the seed of a recursive function, replacing *'s nil output with a default or the passing of a variable the "normal" function takes from the state.
 
 ;;(grank--get-url-handler "http://www.wikipedia.com")
 ;;(grank--get-url-handler "http://www.wikipedia.co")

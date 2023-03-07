@@ -1,0 +1,217 @@
+#+AUTHOR: Gregory Houldsworth
+#+TITLE: Grank
+#+DESCRIPTION: Mode aware URL yank
+
+* Grank
+
+Yanking URLs is tedious. I need to
+=URL → parsed url → link information → link text=
+
+** Naming scheme
+
+~<package-name>-*<function-name>~
+(as in ~(mypackage-*my-function)~)
+denotes a version of the function called by a "cleaner" star
+free version.
+
+for example: passing the seed of a recursive function,
+replacing *'s nil output with a default or passing an
+explicit parameter to the star version while the star free
+takes this value from the environment.
+
+** Prologue
+
+The usual for elisp files. Could the filename and tiny
+description be put in variables?
+
+#+begin_src elisp :tangle yes
+;;; grank.el -- Mode aware URL yanking  -*- lexical-binding: t; -*-
+
+;;; Commentary:
+;;; Mode aware URL yank.
+
+;;; Code:
+#+end_src
+
+* Requirements
+
+The 'url and 'cl-lib packages are required, they come with
+the Emacs distribution.
+
+#+begin_src elisp
+(require 'url)
+(require 'cl-lib)
+#+end_src
+
+* Algorithms + Data Structures
+
+Extracting information from a URL depends on the /sort/ of
+URL and the format of the link text depends on the mode of
+the buffer we are pasting to.
+
+This suggests two sorts of specialised procedures:
+
+- one for extracting information from a specific /sort/ of
+  link. For now, we specialise on the URL's hostname part.
+- Another, called with the extracted information
+  to produce text according to the major mode.
+
+Both specialisation are made by selecting from alists:
+
+#+begin_src elisp
+(defvar grunk-url-dispatch-table nil)
+(defvar grunk-mode-dispatch-table nil)
+#+end_src
+
+The selection of the mode handler is simple: select from the
+alist, use default otherwise. We will do this directly when
+we are ready to format the information derived from the
+provided URL.
+
+The selection of the url handler works differently: each
+entry in the list is a pair with a regexp denoting the
+/class/ of URLs we wish to handle and the CDR is the handler
+procedure. We need to walk through the alist and return the
+~CDR~ of the first match or ~nil~:
+
+#+begin_src elisp
+(defun grank--*get-url-handler (handlers url)
+  "Find the handler for URL or nil if none found."
+  (cl-loop for pair in handlers
+           when (string-match (car pair) url)
+           return (cdr pair)))
+
+(defun grank--get-url-handler (url)
+  (grutils-non-nil-x-or-y
+   (grank--*get-url-handler grank-url-dispatch-table url)
+   #'grank--default-url-handler))
+#+end_src
+
+We also need a structure to carry the extracted link
+info. We use cl's struct with two constructors.
+
+This struct has no default and two custom constructors:
+
+- ~init-~ takes a url, populates the parsed-url and title slots
+- ~make-~ takes all parameters 
+
+#+begin_src elisp
+(cl-defstruct
+    (grank-link-info
+     (:constructor nil)
+     (:constructor
+      init-grank-link-info
+      (&key (url)
+       &aux (parsed-url (url-generic-parse-url url))
+            (title url)))
+     (:constructor
+      make-grank-link-info
+      (&key (url nil)
+            (title nil)
+            (synopsis nil))
+      (&aux (parsed-url (url-generic-parse-url url)))))
+  url parsed-url title synopsis)
+#+end_src
+
+We can now write our two default handlers.
+
+For ~grank--default-url-handler~ with the addition of title
+automatic init from grank-link-info init constructor, we no
+longer need much of this. It could be the identity function.
+
+#+begin_src elisp
+(defun grank--default-url-handler (link-info)
+  "Create basic link-info from link-info."
+  (let ((link-info-url (grank-link-info-url link-info)))
+    (init-grank-link-info
+     :url link-info-url)))
+#+end_src
+
+#+begin_src elisp
+(defun grank--*default-mode-handler (mode link-info &optional style)
+  "Create basic string from LINK-INFO depending on MODE.
+The STYLE parameter changes the output. Unused as of now."
+  (let ((url (grank-link-info-url link-info))
+        (title (grank-link-info-title link-info))
+        (synopsis (grank-link-info-synopsis link-info)))
+    (pcase mode
+      ('org-mode
+       (pcase style
+         (_ (format "[[%s][%s]]" url title))))
+      ('html-mode
+       (pcase style
+         (_ (format "<a href=\"%s\">%s</a>" url title))))
+      ('markdown-mode
+       (pcase style
+         (_ (format "[%s](%s)" url title))))
+      (_ url))))
+
+(defun grank--default-mode-handler (link-info &optional style)
+  "Create basic string from LINK-INFO.
+The STYLE parameter changes the output. Unused as of now."
+  (grank--*default-mode-handler major-mode link-info style))
+#+end_src
+
+Another pair of procedure will transform a URL into a
+link-info structure and a link-info structure into a string:
+
+#+begin_src elisp
+(defun grank--obtain-info (url)
+  "Calls the appropriate url-handler on URL."
+  (let* ((link-info (init-grank-link-info :url url))
+         (parsed-url (grank-link-info-parsed-url link-info))
+         (host (url-host parsed-url))
+         (handler
+          (grank--get-url-handler url)))
+    (funcall handler link-info)))
+
+(defun grank--process-info (link-info &optional style)
+  "Format LINK-INFO struct for the current major mode.
+If the major mode has en entry in the alist
+`grunk-mode-dispatch-table', the formating is done by the
+associated procedure falling back on
+`grank--default-mode-handler' otherwise".
+  (let ((handler
+         (alist-get
+          major-mode
+          grunk-mode-dispatch-table
+          #'grank--default-mode-handler)))
+    (funcall handler link-info)))
+#+end_src
+
+We can now create the pipeline describe above,
+~URL → pretty link~:
+
+#+begin_example elisp
+(defun grank-url-to-link (url)
+  "Create a mode aware link for URL.
+Will use the current major mode"
+  (grank--process-info
+   (grank--obtain-info url)))
+#+end_example
+
+Almost, but not quite what we wanted. How do we pretty-paste
+that URL we just copied from the browser? Like this:
+
+#+begin_src elisp
+(defun grank ()
+  (interactive)
+  (let ((url (current-kill 0 t)))
+    (insert (grank-url-to-link url))))
+#+end_src
+
+* Epilogue
+
+#+begin_src elisp :tangle yes
+(provide 'grank)
+;;; grutils.el ends here
+#+end_src
+
+
+* Mistakes made, lessons learned
+
+| Error                                                                        | Lesson                                           |
+|------------------------------------------------------------------------------+--------------------------------------------------|
+| <26>                                                                         | <26>                                             |
+| Writing URL % encoding handler ignoring the functionality already provided in emacs | RTM? Get familiar with tools, librairies, etc... |
+|------------------------------------------------------------------------------+--------------------------------------------------|
