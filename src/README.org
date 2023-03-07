@@ -5,9 +5,9 @@
 * Grank
 
 Yanking URLs is tedious. I need to
-=URL → parsed url → link information → link text=
+=URL → link information → link text=
 
-** Naming scheme
+* Naming scheme
 
 ~<package-name>-*<function-name>~
 (as in ~(mypackage-*my-function)~)
@@ -19,7 +19,7 @@ replacing *'s nil output with a default or passing an
 explicit parameter to the star version while the star free
 takes this value from the environment.
 
-** Prologue
+* Prologue
 
 The usual for elisp files. Could the filename and tiny
 description be put in variables?
@@ -45,6 +45,8 @@ the Emacs distribution.
 
 * Algorithms + Data Structures
 
+** Link-Extractor / Information Formatter selection
+
 Extracting information from a URL depends on the /sort/ of
 URL and the format of the link text depends on the mode of
 the buffer we are pasting to.
@@ -56,7 +58,8 @@ This suggests two sorts of specialised procedures:
 - Another, called with the extracted information
   to produce text according to the major mode.
 
-Both specialisation are made by selecting from alists:
+And two companion structures, for associating each procedure
+with its target URL /sort/ or mode. Alist work well here:
 
 #+begin_src elisp
 (defvar grunk-url-dispatch-table nil)
@@ -87,6 +90,8 @@ procedure. We need to walk through the alist and return the
    #'grank--default-url-handler))
 #+end_src
 
+** Link Information
+
 We also need a structure to carry the extracted link
 info. We use cl's struct with two constructors.
 
@@ -113,6 +118,8 @@ This struct has no default and two custom constructors:
   url parsed-url title synopsis)
 #+end_src
 
+** Default Handlers
+
 We can now write our two default handlers.
 
 For ~grank--default-url-handler~ with the addition of title
@@ -126,6 +133,9 @@ longer need much of this. It could be the identity function.
     (init-grank-link-info
      :url link-info-url)))
 #+end_src
+
+The mode handler is split with a ~*~'d version for clarity
+and ease of testing.
 
 #+begin_src elisp
 (defun grank--*default-mode-handler (mode link-info &optional style)
@@ -151,6 +161,8 @@ The STYLE parameter changes the output. Unused as of now."
 The STYLE parameter changes the output. Unused as of now."
   (grank--*default-mode-handler major-mode link-info style))
 #+end_src
+
+** Transform and Roll Out!
 
 Another pair of procedure will transform a URL into a
 link-info structure and a link-info structure into a string:
