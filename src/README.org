@@ -182,13 +182,13 @@ associated procedure falling back on
 We can now create the pipeline describe above,
 ~URL → pretty link~:
 
-#+begin_example elisp
+#+begin_src elisp
 (defun grank-url-to-link (url)
   "Create a mode aware link for URL.
 Will use the current major mode"
   (grank--process-info
    (grank--obtain-info url)))
-#+end_example
+#+end_src
 
 Almost, but not quite what we wanted. How do we pretty-paste
 that URL we just copied from the browser? Like this:
