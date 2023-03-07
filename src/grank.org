@@ -4,67 +4,10 @@
 
 * Grank
 
-Yanking a URL into an Org or markdown buffer is tedious.
+Yanking URLs is tedious. I'd like a Lisp function to
+transform =URL → parsed url → link information → link text=
 
-For a simple inline wikipedia link:
-1. copy the URL from the browser
-2. switch to Emacs & yank the URL
-3. go back to the browser and copy the title
-4. and back to emacs to paste that
-
-Simply copying the URL twice and keeping the last element of
-the path as a title is just as tedious and often won't do
-because of percent encoding. Also, this recipe fails for
-youtube URLs: the video id is unhelpful as link text.
-
-What we need is a Lisp function to transform =URL → parsed
-url → link information → link text=
-
-This suggests two sorts of specialised procedures:
-- one for extracting information from a specific sort of
-  link. For now, we specialise on the URL's hostname part.
-- Another procedure, called with the extracted information
-  to produce text according to the major mode in effect.
-
-For URLs and modes for which no handler exists, we need
-default procedures.
-
-We also need two sorts of data
-- two alists:
-  - hostname/info-extraction procedure table
-  - mode/info-printing procedure table
-- A structure to carry the extracted link info. We use cl's
-  struct with keyword constructor, so we can add
-  transparently add more items without breakage.
-
-The alists are trivial:
-
-#+begin_src elisp
-(defvar grunk-url-dispatch-table nil)
-(defvar grunk-mode-dispatch-table nil)
-#+end_src
-
-The link-info structure is quite simple.
-
-#+begin_src elisp
-(cl-defstruct grank-link-info
-  "Represent grank link info."
-  (uri :read-only t :type string)
-  (title :read-only t :type string)
-  (synopsis nil :read-only t :type string))
-#+end_src
-
-We can now write our two default handlers:
-
-#+begin_src elisp
-(defun grank--default-url-handler (parsed-url)
-  "Create basic link-info from PARSED-URL."
-  (let ((plain-url (url-recreate-url parsed-url)))
-    (make-grank-link-info plain-url plain-url)))
-#+end_src
-
-
-* Prologue
+** Prologue
 
 The usual for elisp files. Could the filename and tiny
 description be put in variables?
@@ -78,15 +21,106 @@ description be put in variables?
 ;;; Code:
 #+end_src
 
-* Requirements
+** Requirements
 
 We are using ~url~ for url parsing and ~cl~ for
 structures. Both are included in Emacs.
 
 #+begin_src elisp
 (require 'url)
-(require 'cl)
+(require 'cl-lib)
 #+end_src
+
+** Extract / Present
+
+Extracting information from a URL depends on the /sort/ of
+URL and the format of the link text depends on the mode of
+the buffer we are pasting to.
+
+This suggests two sorts of specialised procedures:
+- one for extracting information from a specific /sort/ of
+  link. For now, we specialise on the URL's hostname part.
+- Another, called with the extracted information
+  to produce text according to the major mode in effect.
+
+Both specialisation are made by selecting from alists:
+
+#+begin_src elisp
+(defvar grunk-url-dispatch-table nil)
+(defvar grunk-mode-dispatch-table nil)
+#+end_src
+
+We need structure to carry the extracted link info. We use
+cl's struct with two constructors.
+
+#+begin_src elisp
+(cl-defstruct
+    (grank-link-info
+     (:constructor nil)
+     (:constructor
+      init-grank-link-info
+      (&key (url)
+       &aux (parsed-url url-generic-parse-url url)))
+     (:constructor
+      make-grank-link-info
+      (&key (url)
+            (title)
+            (synopsis nil))
+      (&aux (parsed-url (url-generic-parse-url url)))))
+  url parsed-url title synopsis)
+#+end_src
+
+For URLs and modes for which no handler exists, we need
+default procedures.
+
+We can now write our two default handlers.
+
+#+begin_src elisp
+(defun grank--default-url-handler (link-info)
+  "Create basic link-info from link-info."
+  (let ((link-info-url (grank-link-info-url link-info)))
+    (make-grank-link-info
+     :url link-info-url
+     :title link-info-url)))
+#+end_src
+
+#+begin_src elisp
+(defun grank--default-mode-handler (link-info &optional style)
+  "Create basic string from LINK-INFO.
+The STYLE parameter changes the output. Unused as of now."
+  (let ((url (grank-link-info-url link-info))
+        (title (grank-link-info-title link-info))
+        (synopsis (grank-link-info-synopsis link-info)))
+    (pcase major-mode
+      ('org-mode
+       (pcase style
+         (t (format "[[%s][%s]]" url title))))
+      ('markdown-mode
+       (pcase style
+         (t (format "[%s](%s)" url title))))
+      (t url))))
+#+end_src
+
+#+begin_src elisp
+(defun grank--handle-url (link-info)
+  (let ((parsed-url (grank-link-info-parsed-url url-info))
+        (hostname (url-host parsed-url))
+        (handler
+         (alist-get
+          hostname
+          grunk-url-dispatch-table
+          #'grank--default-url-handler)))
+    (funcall handler link-info)))
+#+end_src
+
+
+#+begin_example
+(defun grank-url-to-link-string (url)
+  "Create a link string from URL"
+  (
+#+end_example
+
+
 
 * Epilogue
 
@@ -348,6 +382,8 @@ problems.
 
 ;; base64-decode-string string &optional base64url
 ;; b64url if base64url is t (or non-nil)
+
+
 
 (current-kill 0 t)
 
