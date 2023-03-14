@@ -4,6 +4,9 @@
 (require 'cl-lib)
 
 
+;; clear && emacs -batch -l erc -l ../grutils/grutils.el -l ./temp.el -l ./test/grank-test.el -f ert-run-tests-batch-and-exit
+
+
 ;;(grank--get-url-handler "http://www.wikipedia.com")
 ;;(grank--get-url-handler "http://www.wikipedia.co")
 
@@ -277,7 +280,6 @@ Requires xmllint installed and on $PATH."
        nil
        "--html" "--xpath" expression "2>/dev/null" "-")
       (buffer-string))))
-
 
 ;;(string-chop-newline
 ;; (grank--f-on-resource-as-file
