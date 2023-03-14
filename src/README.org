@@ -12,10 +12,10 @@ Mode aware URL yank.
 denotes a version of the function called by a "cleaner" star
 free version.
 
-for example: passing the seed of a recursive function,
-replacing *'s nil output with a default or passing an
-explicit parameter to the star version while the star free
-takes this value from the environment.
+The star version might be needed to pass the seed of a
+recursive function, replace *'s nil output with a default or
+pass an explicit parameter to the star version while the
+star free takes this value from the environment.
 
 * Requirements
 
@@ -221,12 +221,14 @@ that URL we just copied from the browser? Like this:
 
 * Mistakes made, lessons learned and questions
 
-| Error                                                                               | Lesson                                           |
-|-------------------------------------------------------------------------------------+--------------------------------------------------|
-| <26>                                                                                | <26>                                             |
-| Writing URL % encoding handler ignoring the functionality already provided in emacs | RTM? Get familiar with tools, librairies, etc... |
-|-------------------------------------------------------------------------------------+--------------------------------------------------|
-| Spending time packaging guidelines                                                  | Not until package useful to me 1+                |
-|-------------------------------------------------------------------------------------+--------------------------------------------------|
-| Specialising URL info gathering on hostname equality or tree rather than regexp     | Express does it right? What are pro/cons, alternatives? |
-|-------------------------------------------------------------------------------------+--------------------------------------------------|
+| Error                                                                               | Lesson                                                                                                 |
+|-------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------|
+| <26>                                                                                | <26>                                                                                                   |
+| Writing URL % encoding handler ignoring the functionality already provided in emacs | RTM? Get familiar with tools, librairies, etc...                                                       |
+|-------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------|
+| Spending time packaging guidelines                                                  | Not until package useful to me 1+                                                                      |
+|-------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------|
+| Specialising URL info gathering on hostname equality or tree rather than regexp     | Express does it right? What are pro/cons, alternatives?                                                |
+|-------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------|
+| Creating procedures when logic and order procedures do                              | N-ary comparisons (~<~ and friends), ~or~, ~and~ can be used to easily capture /number between/ and /value of exp of default if value nil/ ideas. How well does this translate in other languages (facilities *and* culture) |
+|-------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------|
