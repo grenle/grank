@@ -43,7 +43,7 @@ This suggests two sorts of specialised procedures:
   to produce text according to the major mode.
 
 And two companion structures, for associating each procedure
-with its target URL /sort/ or mode. =alist=s work well here:
+with its target URL /sort/ or mode. =alist='s work well here:
 
 #+begin_src elisp
 (defvar grunk-url-dispatch-table nil)
