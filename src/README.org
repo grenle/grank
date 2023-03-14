@@ -126,6 +126,12 @@ longer need much of this. It could be the identity function.
      :url link-info-url)))
 #+end_src
 
+For our mode handler, we have a stared procedure taking a
+mode, a link-info struct and a style. Being a default
+handler, the style argument is ignored but structurally
+present to demonstrate how to build your own special
+handler.
+
 #+begin_src elisp
 (defun grank--*default-mode-handler (mode link-info &optional style)
   "Create basic string from LINK-INFO depending on MODE.
@@ -144,7 +150,11 @@ The STYLE parameter changes the output. Unused as of now."
        (pcase style
          (_ (format "[%s](%s)" url title))))
       (_ url))))
+#+end_src
 
+The starless version takes the mode from the active buffer.
+
+#+begin_src elisp
 (defun grank--default-mode-handler (link-info &optional style)
   "Create basic string from LINK-INFO.
 The STYLE parameter changes the output. Unused as of now."
@@ -205,7 +215,7 @@ that URL we just copied from the browser? Like this:
 
 #+begin_src elisp
 (provide 'grank)
-;;; grutils.el ends here
+;;; grank.el ends here
 #+end_src
 
 
