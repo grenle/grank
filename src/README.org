@@ -38,8 +38,7 @@ the buffer we are pasting to.
 This suggests two sorts of specialised procedures:
 
 - one for extracting information from a specific /sort/ of
-  link. The appropriate procedure is paired with the regular
-  expression matching URLs it is meant for.
+  link.
 - Another, called with the extracted information
   to produce text according to the major mode.
 
