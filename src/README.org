@@ -46,8 +46,8 @@ And two companion structures, for associating each procedure
 with its target URL /sort/ or mode. =alist='s work well here:
 
 #+begin_src elisp
-(defvar grunk-url-dispatch-table nil)
-(defvar grunk-mode-dispatch-table nil)
+(defvar grank-url-dispatch-table nil)
+(defvar grank-mode-dispatch-table nil)
 #+end_src
 
 The selection of the mode handler is simple: select from the

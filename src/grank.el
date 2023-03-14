@@ -1,15 +1,8 @@
-infile := README.org
-outfile := grank.el
-all:
-	@emacs -q --batch --eval "(require 'org)" \
-		--eval '(org-babel-tangle-file "~/elisp/grank/src/README.org" "~/elisp/grank/src/grank.el")'
-	@echo "oopah loompah dibidi doo"
-
 (require 'url)
 (require 'cl-lib)
 
-(defvar grunk-url-dispatch-table nil)
-(defvar grunk-mode-dispatch-table nil)
+(defvar grank-url-dispatch-table nil)
+(defvar grank-mode-dispatch-table nil)
 
 (defun grank--*get-url-handler (handlers url)
   "Find the handler for URL or nil if none found."
@@ -18,7 +11,7 @@ all:
            return (cdr pair)))
 
 (defun grank--get-url-handler (url)
-  (grutils-non-nil-x-or-y
+  (or
    (grank--*get-url-handler grank-url-dispatch-table url)
    #'grank--default-url-handler))
 
@@ -101,4 +94,4 @@ Will use the current major mode"
     (insert (grank-url-to-link url))))
 
 (provide 'grank)
-;;; grutils.el ends here
+;;; grank.el ends here
