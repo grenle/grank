@@ -29,7 +29,7 @@ the Emacs distribution.
 
 * Algorithms + Data Structures
 
-** Link-Extractor / Information Formatter selection
+** Dispatch on URL /sort/ and mode
 
 Extracting information from a URL depends on the /sort/ of
 URL and the format of the link text depends on the mode of
@@ -58,8 +58,10 @@ provided URL.
 The selection of the url handler works differently: each
 entry in the list is a pair with a regexp denoting the
 /class/ of URLs we wish to handle and the CDR is the handler
-procedure. We need to walk through the alist and return the
-~CDR~ of the first match or ~nil~:
+procedure.
+
+Our internal procedure walks through the provided handlers
+alist and returns the ~CDR~ of the first match or ~nil~.
 
 #+begin_src elisp
 (defun grank--*get-url-handler (handlers url)
@@ -67,9 +69,15 @@ procedure. We need to walk through the alist and return the
   (cl-loop for pair in handlers
            when (string-match (car pair) url)
            return (cdr pair)))
+#+end_src
 
+The starless version gets handlers from the global variable
+and returns a specialised procedure or the globally defined
+default handler.
+
+#+begin_src elisp
 (defun grank--get-url-handler (url)
-  (grutils-non-nil-x-or-y
+  (or
    (grank--*get-url-handler grank-url-dispatch-table url)
    #'grank--default-url-handler))
 #+end_src
