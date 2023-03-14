@@ -226,7 +226,7 @@ that URL we just copied from the browser? Like this:
 | <26>                                                                                | <26>                                                                                                   |
 | Writing URL % encoding handler ignoring the functionality already provided in emacs | RTM? Get familiar with tools, librairies, etc...                                                       |
 |-------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------|
-| Spending time packaging guidelines                                                  | Not until package useful to me 1+                                                                      |
+| Spending time on packaging guidelines                                               | Not until package useful to me 1+                                                                      |
 |-------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------|
 | Specialising URL info gathering on hostname equality or tree rather than regexp     | Express does it right? What are pro/cons, alternatives?                                                |
 |-------------------------------------------------------------------------------------+--------------------------------------------------------------------------------------------------------|
