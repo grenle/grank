@@ -8,16 +8,22 @@
   (should
    (not
     (grank--*get-url-handler '() "http://www.example.com")))
-  )
+  ;; matching handler
+  (should
+   (equal
+    (grank--*get-url-handler '(("\\.*example*" . 123)) "http://www.example.com")
+    123))
+  ;; nil when no matches
+  (should
+   (not
+    (grank--*get-url-handler '(("\\.*example*" . 123)) "http://www.duckduckgo.com"))))
 
 (ert-deftest grank--get-url-handler-test ()
   ;; default handler if none found
   (should
    (equal
     (grank--get-url-handler "http://www.example.com")
-    #'grank--default-url-handler))
-  ;; this
-  )
+    #'grank--default-url-handler)))
 
 (ert-deftest init-grank-link-info-test ()
   ;; init a link-info struct

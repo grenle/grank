@@ -1,3 +1,10 @@
+;;; grank.el --- Mode aware URL yanking -*- lexical-binding: t; -*-
+
+;;; Commentary:
+;;; Please see src/README.org for details
+
+;;; Code:
+
 (require 'url)
 (require 'cl-lib)
 
@@ -5,12 +12,14 @@
 (defvar grank-mode-dispatch-table nil)
 
 (defun grank--*get-url-handler (handlers url)
-  "Find the handler for URL or nil if none found."
+  "Find the handler for URL in HANDLERS.
+Return nil if none found."
   (cl-loop for pair in handlers
            when (string-match (car pair) url)
            return (cdr pair)))
 
 (defun grank--get-url-handler (url)
+  "Find the handler for URL or default if none found."
   (or
    (grank--*get-url-handler grank-url-dispatch-table url)
    #'grank--default-url-handler))
@@ -32,17 +41,16 @@
   url parsed-url title synopsis)
 
 (defun grank--default-url-handler (link-info)
-  "Create basic link-info from link-info."
+  "Create basic LINK-INFO."
   (let ((link-info-url (grank-link-info-url link-info)))
     (init-grank-link-info
      :url link-info-url)))
 
 (defun grank--*default-mode-handler (mode link-info &optional style)
   "Create basic string from LINK-INFO depending on MODE.
-The STYLE parameter changes the output. Unused as of now."
+The STYLE parameter changes the output.  Unused as of now."
   (let ((url (grank-link-info-url link-info))
-        (title (grank-link-info-title link-info))
-        (synopsis (grank-link-info-synopsis link-info)))
+        (title (grank-link-info-title link-info)))
     (pcase mode
       ('org-mode
        (pcase style
@@ -57,28 +65,26 @@ The STYLE parameter changes the output. Unused as of now."
 
 (defun grank--default-mode-handler (link-info &optional style)
   "Create basic string from LINK-INFO.
-The STYLE parameter changes the output. Unused as of now."
+The STYLE parameter changes the output.  Unused as of now."
   (grank--*default-mode-handler major-mode link-info style))
 
 (defun grank--obtain-info (url)
-  "Calls the appropriate url-handler on URL."
+  "Call the appropriate url-handler on URL."
   (let* ((link-info (init-grank-link-info :url url))
-         (parsed-url (grank-link-info-parsed-url link-info))
-         (host (url-host parsed-url))
          (handler
           (grank--get-url-handler url)))
     (funcall handler link-info)))
 
 (defun grank--process-info (link-info &optional style)
-  "Format LINK-INFO struct for the current major mode.
+  "Format LINK-INFO according to major mode and STYLE.
 If the major mode has en entry in the alist
-`grunk-mode-dispatch-table', the formating is done by the
+`grank-mode-dispatch-table', the formating is done by the
 associated procedure falling back on
-`grank--default-mode-handler' otherwise".
+`grank--default-mode-handler' otherwise."
   (let ((handler
          (alist-get
           major-mode
-          grunk-mode-dispatch-table
+          grank-mode-dispatch-table
           #'grank--default-mode-handler)))
     (funcall handler link-info)))
 
@@ -89,9 +95,11 @@ Will use the current major mode"
    (grank--obtain-info url)))
 
 (defun grank ()
+  "Pretty-yank the url in clipboard."
   (interactive)
   (let ((url (current-kill 0 t)))
     (insert (grank-url-to-link url))))
+
 
 (provide 'grank)
 ;;; grank.el ends here
