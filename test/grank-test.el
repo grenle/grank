@@ -3,6 +3,22 @@
 (require 'grank)
 (require 'ert)
 
+(ert-deftest grank--*get-url-handler-test ()
+  ;; nil if empty handlers
+  (should
+   (not
+    (grank--*get-url-handler '() "http://www.example.com")))
+  )
+
+(ert-deftest grank--get-url-handler-test ()
+  ;; default handler if none found
+  (should
+   (equal
+    (grank--get-url-handler "http://www.example.com")
+    #'grank--default-url-handler))
+  ;; this
+  )
+
 (ert-deftest init-grank-link-info-test ()
   ;; init a link-info struct
   (should

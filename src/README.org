@@ -36,8 +36,7 @@ URL and the format of the link text depends on the mode of
 the buffer we are pasting to.
 
 This suggests two sorts of specialised procedures:
-
-- one for extracting information from a specific /sort/ of
+one for extracting information from a specific /sort/ of
   link.
 - Another, called with the extracted information
   to produce text according to the major mode.
