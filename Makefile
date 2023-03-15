@@ -19,6 +19,7 @@ tangle:
 	@printf ";;; Code:\n\n" >> ${pkgfile}
 	@cat ${codefile} >> ${pkgfile}
 	@printf "\n\n(provide '${pkgname})\n;;; ${pkgname}.el ends here" >> ${pkgfile}
+	@rm ${codefile}
 
 check:
 	@emacs -batch \
