@@ -194,7 +194,7 @@ associated procedure falling back on
           #'grank--default-mode-handler)))
     (or
      (funcall handler link-info)
-     (grank--default-mode-handler link-info)))
+     (grank--default-mode-handler link-info))))
 #+end_src
 
 We can now create the pipeline describe above,

@@ -88,7 +88,9 @@ associated procedure falling back on
           major-mode
           grank-mode-dispatch-table
           #'grank--default-mode-handler)))
-    (funcall handler link-info)))
+    (or
+     (funcall handler link-info)
+     (grank--default-mode-handler link-info))))
 
 (defun grank-url-to-link (url)
   "Create a mode aware link for URL.
