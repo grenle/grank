@@ -1,12 +1,32 @@
-* Obtain
+#+TITLE: Grank
 
-1. Clone this repository somewhere (on GNU/Linux I use =~/elisp/=)
+A mode aware URL yanking facility. See the [[./src][README]] in the src
+folder for more information.
 
 * Install
 
-1. Add the path: ~~
-2. Require: ~~
+Clone this repository somewhere (on GNU/Linux I use
+=~/elisp/=)
+
+In your =.emacs= file simply add the path and require,
+replacing the path to where you cloned this repo:
+
+#+begin_src elisp
+(add-to-list 'load-path "~/elisp/grank")
+(require 'grank)
+#+end_src
+
+* Use
+
+After copying a URL from somewhere, =M-x= and call =grank=.
 
 * Config
 
-* Use
+For ease of use, add a shortcut. I use =C-c y= as it's close
+to yank.
+
+#+begin_src elisp
+(global-set-key (kbd "C-c y") 'grank)
+#+end_src
+
+
