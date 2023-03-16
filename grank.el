@@ -49,7 +49,6 @@ Return nil if none found."
 (defun grank--*default-mode-handler (mode link-info &optional style)
   "Create basic string from LINK-INFO depending on MODE.
 The STYLE parameter changes the output.  Unused as of now."
-  (declare (ignore style))
   (let ((url (grank-link-info-url link-info))
         (title (grank-link-info-title link-info)))
     (pcase mode
@@ -74,7 +73,9 @@ The STYLE parameter changes the output.  Unused as of now."
   (let* ((link-info (init-grank-link-info :url url))
          (handler
           (grank--get-url-handler url)))
-    (funcall handler link-info)))
+    (or
+     (funcall handler link-info)
+     (grank--default-url-handler link-info))))
 
 (defun grank--process-info (link-info &optional style)
   "Format LINK-INFO according to major mode and STYLE.
