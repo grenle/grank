@@ -1,6 +1,6 @@
 * Obtain
 
-1. Clone this repository somewhere (on GNU/Linux I use ~\tilde/elisp/~)
+1. Clone this repository somewhere (on GNU/Linux I use =~/elisp/=)
 
 * Install
 
