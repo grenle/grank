@@ -101,4 +101,26 @@ Paste this URL in a browser and obtain JSON:
 }
 #+end_example
 
+As stated above, a mismatch between host and title will not
+work, so a =GET= with the incorrect URL
 
+#+begin_example
+https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&titles=%E3%82%AB%E3%82%AD%E3%83%8E%E3%82%AD
+#+end_example
+
+Will return
+
+#+begin_example
+{
+  "batchcomplete":"",
+  "query":{
+    "pages":{
+      "-1":{
+        "ns":0,
+        "title":"\u30ab\u30ad\u30ce\u30ad",
+        "missing":""
+      }
+    }
+  }
+}
+#+end_example
