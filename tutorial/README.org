@@ -3,9 +3,9 @@
 *Note*: the code in this document requires grank to work.
 
 Let's see how to obtain useful information from a Wikipedia
-link. The site has an API we can use to obtain extended
+link. The site has an [[https://www.mediawiki.org/wiki/API:Main_page][API]] we can use to obtain extended
 information about the page. To call it, we plug the host and
-page title in the a template:
+page title in the template:
 
 #+begin_src elisp
 (defvar grank--wk-query-template
