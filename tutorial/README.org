@@ -3,10 +3,17 @@
 *Note*: the code in this document requires grank to work.
 
 Let's see how to obtain useful information from a Wikipedia
-link. The site has an [[https://www.mediawiki.org/wiki/API:Main_page][API]] we can use to obtain extended
+link.
+
+Our input is a ~link-info~ prepared by ~grank~, our output
+should be another ~link-info~ structure, populated with the
+correct title and synopsis.
+
+Wikipedia has an [[https://www.mediawiki.org/wiki/API:Main_page][API]] we can use to obtain extended
 information about the page.
 
 Our plan of attack:
+
 - Declare the template to construct an API endpoint for a
   Wiki page
 - Identify the data required to complete the template
@@ -17,8 +24,8 @@ Our plan of attack:
 - Extract the title and extract
 - Make a link-info struct with title and extract
 
-Looking at the API options, we can construct the following
-template:
+Looking at the API documentation, we can construct the
+following template:
 
 #+begin_src elisp
 (defvar grank--wk-query-template
@@ -30,8 +37,7 @@ title. On Wikipedia, the host depends on the language of the
 page and a mismatch will not return the information we are
 looking for.
 
-Grank will call our main function with a link-info
-struct. Here's a test vector with English and Japanese
+Here's a test vector with English and Japanese
 versions of a page:
 
 #+begin_src elisp
@@ -44,7 +50,9 @@ Yummy!
 
 Now, to go from link-info to the api endpoint, we need to
 extract the host and title and plug those in our
-template. Extracting is easy:
+template. Extracting is easy, the hostname is a field in the
+parsed url struct and the title is matched by a regular
+expression group:
 
 #+begin_src elisp
 (defun grank--wk-get-host-and-title (link-info)
@@ -116,13 +124,13 @@ Paste this URL in a browser and obtain JSON:
 #+end_example
 
 As stated above, a mismatch between host and title will not
-work, so a =GET= with the incorrect URL
+work, so a =GET= with such a discrepancy:
 
 #+begin_example
 https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&titles=%E3%82%AB%E3%82%AD%E3%83%8E%E3%82%AD
 #+end_example
 
-Will return
+Will return:
 
 #+begin_example
 {
@@ -139,3 +147,86 @@ Will return
 }
 #+end_example
 
+This kinda works. Remains to:
+- cleanup argument names (parsed-json isn't what we want)
+- a lot of them can return null, but wouldn't accept null as
+  input. They need to be chained as a list, and if one
+  returns nil, abort chain and return nil. *NOT* the option
+  /monad/ but a little similar in spirit.
+
+Not too far off so, carry on!
+
+#+begin_src elisp
+(defun grank--get-http-response (url)
+  "Get the response from an HTTP GET on URL.
+This is the entire response, headers included.
+If an error occurs, return nil."
+  (condition-case e
+      (let* ((response)
+             (res-buffer (url-retrieve-synchronously url)))
+        (setq url-user-agent "https://github.com/grenle/grank")
+        (with-current-buffer res-buffer
+          (setq response (buffer-string)))
+        (kill-buffer res-buffer)
+        (setq url-user-agent 'default)
+        response)
+    (error
+     (progn
+       (message "%s" e)
+       nil))))
+
+(defun grank--excise-message-body (http-message)
+  "Given an HTTP message, return its body.
+If no body exists, the empty string is returned."
+  (let ((start-at (string-match "\n\n" http-message)))
+    (if start-at
+        (substring http-message (+ start-at 2))
+      "")))
+
+(grank--excise-message-body (grank--get-http-response "http://localhost:4321"))
+
+;;; wget -q --save-headers --output-document - <URL> > <FILENAME>
+
+(defvar json-wk-pers-doc
+  (json-parse-string
+   (with-temp-buffer
+     (insert-file-contents "~/elisp/grank/tutorial/data/wk-jp-persimmon")
+     (grank--excise-message-body (buffer-string)))))
+
+(defun grank--wk-json-nav-query (parsed-json)
+  "Get value associated w. query in hashtable PARSED-JSON"
+  (gethash "query" parsed-json))
+
+(defun grank--wk-json-nav-pages (parsed-json)
+  "Get value associated w. pages in hashtable PARSED-JSON."
+  (gethash "pages" parsed-json))
+
+(defun grank--hash-get-keys (hash-table)
+  "List the keys in HASH-TABLE"
+  (let ((keys))
+    (maphash
+     (lambda (k v) (setq keys (cons k keys)))
+     hash-table)
+    keys))
+
+(defun grank--wk-json-page-or-nil (parsed-json)
+  "Return the single page in PARSED-JSON.
+If there are zero or 2+ pages, return nil."
+  (let ((keys (grank--hash-get-keys parsed-json)))
+    (if (= 1 (length keys))
+        (gethash (car keys) parsed-json)
+      nil)))
+
+(defun grank--wk-json-page-get-title (parsed-json)
+  "Get the value associated with title in hashtable PARSED-JSON."
+  (gethash "title" parsed-json))
+
+(defun grank--wk-json-page-get-synopsis (parsed-json)
+  "Get the value associated with extract in hashtable PARSED-JSON."
+  (gethash "extract" parsed-json))
+
+(grank--wk-json-page-get-synopsis
+ (grank--wk-json-page-or-nil
+  (grank--wk-json-nav-pages
+   (grank--wk-json-nav-query json-wk-pers-doc))))
+#+end_src
