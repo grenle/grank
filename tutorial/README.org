@@ -4,16 +4,30 @@
 
 Let's see how to obtain useful information from a Wikipedia
 link. The site has an [[https://www.mediawiki.org/wiki/API:Main_page][API]] we can use to obtain extended
-information about the page. To call it, we plug the host and
-page title in the template:
+information about the page.
+
+Our plan of attack:
+- Declare the template to construct an API endpoint for a
+  Wiki page
+- Identify the data required to complete the template
+- Obtain the data required by the template from the URL
+- Construct the endpoint
+- Retrieve the associated JSON document (nicely!)
+- Parse the document
+- Extract the title and extract
+- Make a link-info struct with title and extract
+
+Looking at the API options, we can construct the following
+template:
 
 #+begin_src elisp
 (defvar grank--wk-query-template
   "https://%s/w/api.php?format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&titles=%s")
 #+end_src
 
-On Wikipedia, the host depends on the language of the page
-and a mismatch will not return the information we are
+The first ~%s~ if for the host, the second for the page
+title. On Wikipedia, the host depends on the language of the
+page and a mismatch will not return the information we are
 looking for.
 
 Grank will call our main function with a link-info
@@ -124,3 +138,4 @@ Will return
   }
 }
 #+end_example
+
