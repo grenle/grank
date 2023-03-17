@@ -81,4 +81,24 @@ page:
 #+RESULTS:
 : https://ja.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&titles=%E3%82%AB%E3%82%AD%E3%83%8E%E3%82%AD
 
+Paste this URL in a browser and obtain JSON:
+
+#+begin_example
+{
+  batchcomplete: "",
+  query: {
+    pages: {
+      51229: {
+        pageid: 51229,
+        ns: 0,
+        title: "カキノキ",
+        extract: "カキノキ（柿の木、学名：Diospyros kaki）は、カキノキ科 (Ebenaceae) カキノキ属 の1種の落葉樹である。東アジア原産 の同地域固有種。日本や韓国、中国に多くの在来品種があり、特に中国・長江流域に自生している。
+        熟した果実（柿）は食用とされ、日本では果樹として、北海道以外で広く栽培されている。果実はビタミン類や食物繊維を多く含むことから、現代では東アジア以外の地域でも栽培・消費されている。ヨーロッパ産（2018年時点で54万トン）ではスペインが9割を占め、中国に次ぐ世界第2位の生産国である。
+        幹は家具材として用いられる。葉は茶の代わり（茶外茶）として加工され飲まれることがある。果実はタンニンを多く含み、柿渋は防腐剤として用いられる。現在では世界中の温暖な地域（渋柿は寒冷地）で栽培されている。"
+      }
+    }
+  }
+}
+#+end_example
+
 
