@@ -221,8 +221,6 @@ that URL we just copied from the browser? Like this:
 
 * Handlers
 
-We have enough machinery to write special handlers and their helpers.
-
 ** Handler helper
 
 To extract information from a page, we might need to

@@ -83,7 +83,18 @@
          :url "http://www.example.com/"
          :title "just an example")))
       (buffer-string))
-    "[[http://www.example.com/][just an example]]")))
+    "[[http://www.example.com/][just an example]]"))
+  (should
+   (equal
+    (with-temp-buffer
+      (html-mode)
+      (insert
+       (grank--default-mode-handler
+        (make-grank-link-info
+         :url "http://www.example.com/"
+         :title "just an example")))
+      (buffer-string))
+    "<a href=\"http://www.example.com/\">just an example</a>")))
 
 (ert-deftest grank--obtain-info-test ()
   (let* ((example-url "http://www.example.com/")

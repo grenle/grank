@@ -1,0 +1,84 @@
+#+TITLE: Granking Wikipedia
+
+*Note*: the code in this document requires grank to work.
+
+Let's see how to obtain useful information from a Wikipedia
+link. The site has an API we can use to obtain extended
+information about the page. To call it, we plug the host and
+page title in the a template:
+
+#+begin_src elisp
+(defvar grank--wk-query-template
+  "https://%s/w/api.php?format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&titles=%s")
+#+end_src
+
+On Wikipedia, the host depends on the language of the page
+and a mismatch will not return the information we are
+looking for.
+
+Grank will call our main function with a link-info
+struct. Here's a test vector with English and Japanese
+versions of a page:
+
+#+begin_src elisp
+(defvar --test-url-wk-per
+  `((en . ,(init-grank-link-info :url "https://en.wikipedia.org/wiki/Persimmon"))
+    (jp . ,(init-grank-link-info :url "https://ja.wikipedia.org/wiki/%E3%82%AB%E3%82%AD%E3%83%8E%E3%82%AD#%E6%9F%BF%E3%81%AE%E5%AE%9F"))))
+#+end_src
+
+Yummy!
+
+Now, to go from link-info to the api endpoint, we need to
+extract the host and title and plug those in our
+template. Extracting is easy:
+
+#+begin_src elisp
+(defun grank--wk-get-host-and-title (link-info)
+  "Get Wikipedia host and title from LINK-INFO.
+Returns nil if we cannot obtain either."
+  (let* ((parsed-url (grank-link-info-parsed-url link-info))
+         (host (url-host parsed-url))
+         (path (url-filename parsed-url))
+         (title (save-match-data
+                  (and (string-match "/wiki/\\(.*\\)/?" path)
+                       (match-string 1 path)))))
+    (if (and host title)
+        (cons host title)
+      nil)))
+#+end_src
+
+Using this on the Japanese URL:
+
+#+begin_src elisp
+(grank--wk-get-host-and-title
+ (alist-get 'jp --test-url-wk-per))
+#+end_src
+
+Gives us:
+
+#+RESULTS:
+: (ja.wikipedia.org . %E3%82%AB%E3%82%AD%E3%83%8E%E3%82%AD)
+
+Plugging is also simple:
+
+#+begin_src elisp
+(defun grank--wk-query-with-title (host-and-title)
+  (pcase-let ((`(,host . ,title) host-and-title))
+    (format grank--wk-query-template host title)))
+#+end_src
+
+Again with our Japanese URL:
+
+#+begin_src elisp
+(grank--wk-query-with-title
+ (grank--wk-get-host-and-title
+  (alist-get 'jp --test-url-wk-per)))
+#+end_src
+
+Gives us the URL to call to obtain information about this
+page:
+
+#+RESULTS:
+: https://ja.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro&explaintext&redirects=1&titles=%E3%82%AB%E3%82%AD%E3%83%8E%E3%82%AD
+
+
