@@ -153,6 +153,10 @@ This kinda works. Remains to:
   input. They need to be chained as a list, and if one
   returns nil, abort chain and return nil. *NOT* the option
   /monad/ but a little similar in spirit.
+- we set the url-user-agent back to default. Wrong! It
+  should be back to whatever it was!
+- A single page object isn't a sufficient success criteria:
+  the k must != -1.
 
 Not too far off so, carry on!
 
@@ -160,15 +164,18 @@ Not too far off so, carry on!
 (defun grank--get-http-response (url)
   "Get the response from an HTTP GET on URL.
 This is the entire response, headers included.
-If an error occurs, return nil."
+If an error occurs, return nil.
+The `url-user-agent' is temporarily modified to grank's
+repo and restored to its previous value."
   (condition-case e
-      (let* ((response)
+      (let* ((ua url-user-agent)
+             (response)
              (res-buffer (url-retrieve-synchronously url)))
         (setq url-user-agent "https://github.com/grenle/grank")
         (with-current-buffer res-buffer
           (setq response (buffer-string)))
         (kill-buffer res-buffer)
-        (setq url-user-agent 'default)
+        (setq url-user-agent ua)
         response)
     (error
      (progn
